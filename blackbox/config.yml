@@ -14,3 +14,10 @@ modules:
         Connection: "keep-alive"
       tls_config:
         insecure_skip_verify: true
+      fail_if_ssl: false
+      fail_if_not_ssl: false
+      fail_if_body_not_matches_regexp: [".*"]
+      fail_if_header_not_matches:
+        server: [".*"]
+      fail_if_header_matches:
+        x-powered-by: []

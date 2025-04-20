@@ -18,7 +18,7 @@ scrape_configs:
         - https://careeradmin.techforing.com/admin
         - http://customer.techforing.com
         - https://techforing.com
-        - https://devcmsadmin.techforing.com
+        - https://devcmsadmin.techforing.com/admin
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -26,3 +26,11 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115
+      - source_labels: [__param_target]
+        regex: (http|https)://([^/]+)
+        target_label: domain
+        replacement: $2
+      - source_labels: [__param_target]
+        regex: (http|https)://
+        target_label: protocol
+        replacement: $1
