@@ -33,7 +33,7 @@ scrape_configs:
         labels:
           instance: '07 - CMS Admin'
       - targets:
-          - https://customeradmin.techforing.com/admin/
+          - https://customeradmin.techforing.com/tcp/sudoers/login/?next=/tcp/sudoers/
         labels:
           instance: '08 - Customer Admin'
       - targets:
@@ -71,7 +71,7 @@ scrape_configs:
       - targets:
           - https://admin.techforing.com/
         labels:
-          instance: '17 - Admin Panel'
+          instance: '17 - Customer Admin Backend'
       - targets:
           - https://devtenant.techforing.com/login
         labels:
