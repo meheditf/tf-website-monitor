@@ -18,6 +18,8 @@ modules:
       fail_if_not_ssl: false
       fail_if_body_not_matches_regexp: [".*"]
       fail_if_header_not_matches:
-        server: [".*"]
+        - header: server
+          regexp: ".*"
       fail_if_header_matches:
-        x-powered-by: []
+        - header: x-powered-by
+          regexp: ".*"
