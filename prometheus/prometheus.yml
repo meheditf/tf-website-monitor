@@ -75,15 +75,15 @@ scrape_configs:
       - targets:
           - https://devtenant.techforing.com/login
         labels:
-          instance: '18 - Dev Tenant'
+          instance: '18 - Microservice Tenant Frontend'
       - targets:
           - https://devapitenant.techforing.com/login
         labels:
-          instance: '19 - Dev Tenant API'
+          instance: '19 - Microservice Tenant Backend'
       - targets:
           - https://devapiauth.techforing.com/admin/
         labels:
-          instance: '20 - Dev Auth Admin'
+          instance: '20 - Microservice Auth Backend'
 
     relabel_configs:
       - source_labels: [__address__]
