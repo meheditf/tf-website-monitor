@@ -1,24 +1,35 @@
-global:
-  scrape_interval: 60s
-  evaluation_interval: 60s
-
 scrape_configs:
-  - job_name: 'node-exporter'
-    static_configs:
-      - targets: ['node-exporter:9100']
-
-  - job_name: 'blackbox'
+  - job_name: 'blackbox-http'
     metrics_path: /probe
     params:
       module: [http_2xx]
     static_configs:
       - targets:
+        # Frontend
+        - https://techforing.com
         - https://hrms.techforing.com
         - https://cms.techforing.com
-        - https://careeradmin.techforing.com/admin
-        - http://customer.techforing.com
-        - https://techforing.com
-        - https://devcmsadmin.techforing.com/admin
+        - https://customer.techforing.com
+        - https://growth.techforing.com
+        # Backend
+        - https://careeradmin.techforing.com/admin/
+        - https://cmsadmin.techforing.com/admin/
+        - https://customeradmin.techforing.com/admin/
+        # Dev
+        # Frontend
+        - https://main.techforing.com/
+        - https://devcms.techforing.com/
+        - https://devcareer.techforing.com/
+        - https://devgrowth.techforing.com/
+        # Backend
+        - https://devcmsadmin.techforing.com/admin/
+        - https://devhrms.techforing.com/
+        - https://devcareeradmin.techforing.com/
+        - https://react.techforing.com/
+        - https://admin.techforing.com/
+        - https://devtenant.techforing.com/login
+        - https://devapitenant.techforing.com/login
+        - https://devapiauth.techforing.com/admin/
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
@@ -26,11 +37,3 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115
-      - source_labels: [__param_target]
-        regex: (http|https)://([^/]+)
-        target_label: domain
-        replacement: $2
-      - source_labels: [__param_target]
-        regex: (http|https)://
-        target_label: protocol
-        replacement: $1

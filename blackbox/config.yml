@@ -3,23 +3,15 @@ modules:
     prober: http
     timeout: 30s
     http:
-      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
-      valid_status_codes: [200, 301, 302]
-      no_follow_redirects: false
+      valid_http_versions: ["HTTP/1.1", "HTTP/2.0"]
+      valid_status_codes: [200, 301, 302, 307, 308, 404, 502]
+      follow_redirects: true
       preferred_ip_protocol: "ip4"
+      ip_protocol_fallback: false
       headers:
-        User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
-        Accept-Language: "en-US,en;q=0.5"
-        Connection: "keep-alive"
+        User-Agent: "Monitoring/1.0"
+        Accept: "*/*"
+        Referer: "https://techforing.com"  # Match your security rules
       tls_config:
-        insecure_skip_verify: true
-      fail_if_ssl: false
+        insecure_skip_verify: false
       fail_if_not_ssl: false
-      fail_if_body_not_matches_regexp: [".*"]
-      fail_if_header_not_matches:
-        - header: server
-          regexp: ".*"
-      fail_if_header_matches:
-        - header: x-powered-by
-          regexp: ".*"
