@@ -5,35 +5,92 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-        # Frontend
-        - https://techforing.com
-        - https://hrms.techforing.com
-        - https://cms.techforing.com
-        - https://customer.techforing.com
-        - https://growth.techforing.com
-        # Backend
-        - https://careeradmin.techforing.com/admin/
-        - https://cmsadmin.techforing.com/admin/
-        - https://customeradmin.techforing.com/admin/
-        # Dev
-        # Frontend
-        - https://main.techforing.com/
-        - https://devcms.techforing.com/
-        - https://devcareer.techforing.com/
-        - https://devgrowth.techforing.com/
-        # Backend
-        - https://devcmsadmin.techforing.com/admin/
-        - https://devhrms.techforing.com/
-        - https://devcareeradmin.techforing.com/
-        - https://react.techforing.com/
-        - https://admin.techforing.com/
-        - https://devtenant.techforing.com/login
-        - https://devapitenant.techforing.com/login
-        - https://devapiauth.techforing.com/admin/
+          - https://techforing.com
+        labels:
+          instance: '01 - Main Site'
+      - targets:
+          - https://hrms.techforing.com
+        labels:
+          instance: '02 - HRMS'
+      - targets:
+          - https://cms.techforing.com
+        labels:
+          instance: '03 - CMS'
+      - targets:
+          - https://customer.techforing.com
+        labels:
+          instance: '04 - Customer'
+      - targets:
+          - https://growth.techforing.com
+        labels:
+          instance: '05 - Growth'
+      - targets:
+          - https://careeradmin.techforing.com/admin/
+        labels:
+          instance: '06 - Career Admin'
+      - targets:
+          - https://cmsadmin.techforing.com/admin/
+        labels:
+          instance: '07 - CMS Admin'
+      - targets:
+          - https://customeradmin.techforing.com/admin/
+        labels:
+          instance: '08 - Customer Admin'
+      - targets:
+          - https://main.techforing.com/
+        labels:
+          instance: '09 - Dev Main'
+      - targets:
+          - https://devcms.techforing.com/
+        labels:
+          instance: '10 - Dev CMS'
+      - targets:
+          - https://devcareer.techforing.com/
+        labels:
+          instance: '11 - Dev Career'
+      - targets:
+          - https://devgrowth.techforing.com/
+        labels:
+          instance: '12 - Dev Growth'
+      - targets:
+          - https://devcmsadmin.techforing.com/admin/
+        labels:
+          instance: '13 - Dev CMS Admin'
+      - targets:
+          - https://devhrms.techforing.com/
+        labels:
+          instance: '14 - Dev HRMS'
+      - targets:
+          - https://devcareeradmin.techforing.com/
+        labels:
+          instance: '15 - Dev Career Admin'
+      - targets:
+          - https://react.techforing.com/
+        labels:
+          instance: '16 - React App'
+      - targets:
+          - https://admin.techforing.com/
+        labels:
+          instance: '17 - Admin Panel'
+      - targets:
+          - https://devtenant.techforing.com/login
+        labels:
+          instance: '18 - Dev Tenant'
+      - targets:
+          - https://devapitenant.techforing.com/login
+        labels:
+          instance: '19 - Dev Tenant API'
+      - targets:
+          - https://devapiauth.techforing.com/admin/
+        labels:
+          instance: '20 - Dev Auth Admin'
+
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
+        target_label: target
+      - source_labels: [instance]
         target_label: instance
       - target_label: __address__
         replacement: blackbox-exporter:9115
