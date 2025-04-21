@@ -51,6 +51,7 @@ services:
     image: grafana/grafana
     container_name: grafana
     ports:
+      - "3010:3010"  # Changed to standard port
     volumes:
       - grafana-storage:/var/lib/grafana
     networks:
