@@ -8,85 +8,17 @@ scrape_configs:
       module: [http_2xx]
     static_configs:
       - targets:
-          - https://techforing.com
+          - https://github.com
         labels:
-          instance: '01 - Main Site'
+          instance: '01 - Github Site'
       - targets:
-          - https://hrms.techforing.com
+          - https://linkedin.com
         labels:
-          instance: '02 - HRMS'
+          instance: '02 - LinkedIn Site'
       - targets:
-          - https://cms.techforing.com
+          - https://facebook.com
         labels:
-          instance: '03 - CMS'
-      - targets:
-          - https://customer.techforing.com
-        labels:
-          instance: '04 - Customer'
-      - targets:
-          - https://growth.techforing.com
-        labels:
-          instance: '05 - Growth'
-      - targets:
-          - https://careeradmin.techforing.com/admin/
-        labels:
-          instance: '06 - Career Admin'
-      - targets:
-          - https://cmsadmin.techforing.com/admin/
-        labels:
-          instance: '07 - CMS Admin'
-      - targets:
-          - https://customeradmin.techforing.com/tcp/sudoers/login/?next=/tcp/sudoers/
-        labels:
-          instance: '08 - Customer Admin'
-      - targets:
-          - https://main.techforing.com/
-        labels:
-          instance: '09 - Dev Main'
-      - targets:
-          - https://devcms.techforing.com/
-        labels:
-          instance: '10 - Dev CMS'
-      - targets:
-          - https://devcareer.techforing.com/
-        labels:
-          instance: '11 - Dev Career'
-      - targets:
-          - https://devgrowth.techforing.com/
-        labels:
-          instance: '12 - Dev Growth'
-      - targets:
-          - https://devcmsadmin.techforing.com/admin/
-        labels:
-          instance: '13 - Dev CMS Admin'
-      - targets:
-          - https://devhrms.techforing.com/
-        labels:
-          instance: '14 - Dev HRMS'
-      - targets:
-          - https://devcareeradmin.techforing.com/
-        labels:
-          instance: '15 - Dev Career Admin'
-      - targets:
-          - https://react.techforing.com/
-        labels:
-          instance: '16 - React App'
-      - targets:
-          - https://admin.techforing.com/
-        labels:
-          instance: '17 - Customer Admin Backend'
-      - targets:
-          - https://devtenant.techforing.com/login
-        labels:
-          instance: '18 - Microservice Tenant Frontend'
-      - targets:
-          - https://devapitenant.techforing.com/login
-        labels:
-          instance: '19 - Microservice Tenant Backend'
-      - targets:
-          - https://devapiauth.techforing.com/admin/
-        labels:
-          instance: '20 - Microservice Auth Backend'
+          instance: '03 - Facebook Site'
 
     relabel_configs:
       - source_labels: [__address__]

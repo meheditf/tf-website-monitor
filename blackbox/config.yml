@@ -11,7 +11,6 @@ modules:
       headers:
         User-Agent: "Monitoring/1.0"
         Accept: "*/*"
-        Referer: "https://techforing.com"  # Match your security rules
       tls_config:
         insecure_skip_verify: false
       fail_if_not_ssl: false
