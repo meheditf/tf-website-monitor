@@ -28,6 +28,7 @@ form_data = None
 for item in reversed(data_layer):  # iterate from last
     if item.get("event") == "formDataReady":
         form_data = item
+        
         break
 
 if form_data:
