@@ -5,6 +5,7 @@ pipeline {
         SONAR_PROJECT_KEY = 'tf-website-monitor'
         SONAR_HOST_URL = 'http://44.251.129.5:9000'
         GITHUB_STATUS_CONTEXT = 'SonarQube Quality Gate'
+        GITHUB_REPO = 'meheditf/tf-website-monitor'
     }
     
     stages {
@@ -20,6 +21,7 @@ pipeline {
                     echo "Change Branch: ${env.CHANGE_BRANCH ?: 'N/A'}"
                     echo "Change Target: ${env.CHANGE_TARGET ?: 'N/A'}"
                     echo "GIT Branch: ${env.GIT_BRANCH ?: 'N/A'}"
+                    echo "GIT Commit: ${env.GIT_COMMIT ?: 'N/A'}"
                     echo "Is this a PR build? ${env.CHANGE_ID ? 'YES' : 'NO'}"
                     echo "================================"
                 }
@@ -34,20 +36,27 @@ pipeline {
                         string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
                     ]) {
                         // Mark PR status as pending
-                        if (env.CHANGE_ID) {
+                        if (env.CHANGE_ID && env.GIT_COMMIT) {
                             echo "=== Setting GitHub status to PENDING for PR #${env.CHANGE_ID} ==="
                             echo "PR URL: ${env.CHANGE_URL}"
+                            echo "Commit: ${env.GIT_COMMIT}"
                             echo "Status context name: '${env.GITHUB_STATUS_CONTEXT}'"
                             try {
-                                setGitHubPullRequestStatus(
-                                    context: env.GITHUB_STATUS_CONTEXT,
-                                    state: 'PENDING',
-                                    message: 'Running code quality scan...'
-                                )
+                                sh """
+                                    curl -s -X POST \
+                                      -H "Authorization: token ${GITHUB_TOKEN}" \
+                                      -H "Accept: application/vnd.github.v3+json" \
+                                      https://api.github.com/repos/${GITHUB_REPO}/statuses/${env.GIT_COMMIT} \
+                                      -d '{
+                                        "state": "pending",
+                                        "context": "${GITHUB_STATUS_CONTEXT}",
+                                        "description": "Running code quality scan...",
+                                        "target_url": "${env.BUILD_URL}"
+                                      }'
+                                """
                                 echo "✓ GitHub status notification sent successfully"
                             } catch (Exception e) {
                                 echo "✗ WARNING: Failed to set GitHub status: ${e.message}"
-                                
                             }
                         } else {
                             echo "Not a PR build (CHANGE_ID is null), skipping GitHub status notification"
@@ -73,8 +82,8 @@ pipeline {
                             def qg = waitForQualityGate()
                             echo "Quality Gate Status: ${qg.status}"
                             
-                            if (env.CHANGE_ID) {
-                                def ghState = (qg.status == 'OK') ? 'SUCCESS' : 'FAILURE'
+                            if (env.CHANGE_ID && env.GIT_COMMIT) {
+                                def ghState = (qg.status == 'OK') ? 'success' : 'failure'
                                 def ghMessage = (qg.status == 'OK') ? 
                                     'Quality gate passed ✓' : 
                                     "Quality gate failed: ${qg.status}"
@@ -83,15 +92,21 @@ pipeline {
                                 echo "Status context name: '${env.GITHUB_STATUS_CONTEXT}'"
                                 echo "Message: ${ghMessage}"
                                 try {
-                                    setGitHubPullRequestStatus(
-                                        context: env.GITHUB_STATUS_CONTEXT,
-                                        state: ghState,
-                                        message: ghMessage
-                                    )
+                                    sh """
+                                        curl -s -X POST \
+                                          -H "Authorization: token ${GITHUB_TOKEN}" \
+                                          -H "Accept: application/vnd.github.v3+json" \
+                                          https://api.github.com/repos/${GITHUB_REPO}/statuses/${env.GIT_COMMIT} \
+                                          -d '{
+                                            "state": "${ghState}",
+                                            "context": "${GITHUB_STATUS_CONTEXT}",
+                                            "description": "${ghMessage}",
+                                            "target_url": "${env.BUILD_URL}"
+                                          }'
+                                    """
                                     echo "✓ GitHub status notification sent successfully: ${ghState}"
                                 } catch (Exception e) {
                                     echo "✗ WARNING: Failed to set GitHub status: ${e.message}"
-                                    
                                 }
                             }
                             
@@ -109,19 +124,25 @@ pipeline {
         failure {
             script {
                 echo "=== Pipeline FAILED ==="
-                if (env.CHANGE_ID) {
+                if (env.CHANGE_ID && env.GIT_COMMIT) {
                     echo "Setting GitHub status to FAILURE for PR #${env.CHANGE_ID}"
                     withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                         try {
-                            setGitHubPullRequestStatus(
-                                context: env.GITHUB_STATUS_CONTEXT,
-                                state: 'FAILURE',
-                                message: 'Pipeline execution failed'
-                            )
+                            sh """
+                                curl -s -X POST \
+                                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                                  -H "Accept: application/vnd.github.v3+json" \
+                                  https://api.github.com/repos/${GITHUB_REPO}/statuses/${env.GIT_COMMIT} \
+                                  -d '{
+                                    "state": "failure",
+                                    "context": "${GITHUB_STATUS_CONTEXT}",
+                                    "description": "Pipeline execution failed",
+                                    "target_url": "${env.BUILD_URL}"
+                                  }'
+                            """
                             echo "✓ GitHub failure status sent"
                         } catch (Exception e) {
                             echo "✗ WARNING: Failed to set GitHub failure status: ${e.message}"
-                            
                         }
                     }
                 } else {
