@@ -4,6 +4,7 @@ pipeline {
     environment {
         SONAR_PROJECT_KEY = "${env.JOB_NAME}" // Use job name as project key
         SONAR_HOST_URL = credentials('http://44.251.129.5:9000') // Jenkins credential or global variable
+
     }
 
     stages {
