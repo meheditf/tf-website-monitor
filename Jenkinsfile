@@ -7,10 +7,10 @@ pipeline {
     }
     
     stages {
-        // Stage runs only for pull requests
+        // Stage runs only for pull requests targeting dev
         stage('SonarQube Analysis & Quality Gate (PR Only)') {
             when { 
-                changeRequest() 
+                changeRequest(target: 'dev') 
             }
             steps {
                 withCredentials([
@@ -57,7 +57,7 @@ pipeline {
             }
         }
 
-        // Optional: Stage that runs on every push or non-PR branch
+        // Stage that runs on non-PR builds (regular pushes)
         stage('Non-PR Build') {
             when { not { changeRequest() } }
             steps {
