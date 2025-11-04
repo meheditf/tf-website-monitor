@@ -7,85 +7,62 @@ pipeline {
     }
     
     stages {
-        stage('SonarQube Analysis & Quality Gate') {
+        // Stage runs only for pull requests targeting dev
+        stage('SonarQube Analysis & Quality Gate (PR Only)') {
+            when { 
+                changeRequest(target: 'dev') 
+            }
             steps {
-                script {
-                    // Set GitHub status to pending (if this is a PR)
-                    if (env.CHANGE_ID) {
-                        try {
-                            githubNotify status: 'PENDING', 
-                                         context: 'SonarQube Quality Gate',
-                                         description: 'Running code quality scan...'
-                        } catch (Exception e) {
-                            echo "Warning: Could not update GitHub status: ${e.message}"
+                withCredentials([
+                    string(credentialsId: 'SonarQube', variable: 'SONAR_AUTH_TOKEN'),
+                    string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
+                ]) {
+                    script {
+                        // Mark PR status as pending
+                        githubNotify context: 'SonarQube Quality Gate', 
+                                     status: 'PENDING', 
+                                     description: 'Running code quality scan...', 
+                                     credentialsId: 'github-token'
+                        
+                        // Run SonarQube scanner
+                        withSonarQubeEnv('SONARQUBE') {
+                            sh """
+                                /usr/local/bin/sonar-scanner \
+                                -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
+                                -Dsonar.projectName=${SONAR_PROJECT_KEY} \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.login=${SONAR_AUTH_TOKEN} \
+                                -Dsonar.python.version=3.12
+                            """
                         }
-                    }
-                }
-                
-                withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_AUTH_TOKEN')]) {
-                    withSonarQubeEnv('SONARQUBE') {
-                        sh """
-                            /usr/local/bin/sonar-scanner \
-                            -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
-                            -Dsonar.projectName=${SONAR_PROJECT_KEY} \
-                            -Dsonar.sources=. \
-                            -Dsonar.host.url=${SONAR_HOST_URL} \
-                            -Dsonar.token=${SONAR_AUTH_TOKEN} \
-                            -Dsonar.python.version=3.12
-                        """
-                    }
-                    
-                    // Wait for quality gate - OUTSIDE withSonarQubeEnv but INSIDE withCredentials
-                    timeout(time: 5, unit: 'MINUTES') {
-                        script {
-                            echo "Waiting for SonarQube Quality Gate result..."
+
+                        // Wait for Quality Gate
+                        timeout(time: 5, unit: 'MINUTES') {
+                            def qg = waitForQualityGate()
+                            echo "Quality Gate Status: ${qg.status}"
                             
-                            try {
-                                def qg = waitForQualityGate()
-                                echo "Quality Gate Status: ${qg.status}"
-                                
-                                if (qg.status != 'OK') {
-                                    // Update GitHub with failure
-                                    if (env.CHANGE_ID) {
-                                        try {
-                                            githubNotify status: 'FAILURE',
-                                                         context: 'SonarQube Quality Gate',
-                                                         description: "Quality gate failed: ${qg.status}"
-                                        } catch (Exception e) {
-                                            echo "Warning: Could not update GitHub status: ${e.message}"
-                                        }
-                                    }
-                                    error "Pipeline aborted due to quality gate failure: ${qg.status}"
-                                } else {
-                                    // Update GitHub with success
-                                    if (env.CHANGE_ID) {
-                                        try {
-                                            githubNotify status: 'SUCCESS',
-                                                         context: 'SonarQube Quality Gate',
-                                                         description: 'Quality gate passed!'
-                                        } catch (Exception e) {
-                                            echo "Warning: Could not update GitHub status: ${e.message}"
-                                        }
-                                    }
-                                }
-                            } catch (Exception e) {
-                                echo "ERROR waiting for Quality Gate: ${e.message}"
-                                echo "This usually means the webhook from SonarQube didn't arrive"
-                                throw e
+                            def ghStatus = (qg.status == 'OK') ? 'SUCCESS' : 'FAILURE'
+                            githubNotify context: 'SonarQube Quality Gate', 
+                                         status: ghStatus, 
+                                         description: "Quality gate ${qg.status}", 
+                                         credentialsId: 'github-token'
+                            
+                            if (qg.status != 'OK') {
+                                error "Pipeline aborted due to Quality Gate failure: ${qg.status}"
                             }
                         }
                     }
                 }
             }
         }
-    }
-    
-    post {
-        success {
-            echo '✅ SonarQube scan passed and quality gate OK!'
-        }
-        failure {
-            echo '❌ SonarQube scan failed or quality gate failed!'
+
+        // Stage that runs on non-PR builds (regular pushes)
+        stage('Non-PR Build') {
+            when { not { changeRequest() } }
+            steps {
+                echo "This stage runs for regular pushes / branches"
+            }
         }
     }
 }
