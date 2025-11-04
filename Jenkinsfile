@@ -47,7 +47,7 @@ pipeline {
                                 echo "✓ GitHub status notification sent successfully"
                             } catch (Exception e) {
                                 echo "✗ WARNING: Failed to set GitHub status: ${e.message}"
-                                e.printStackTrace()
+                                
                             }
                         } else {
                             echo "Not a PR build (CHANGE_ID is null), skipping GitHub status notification"
@@ -91,7 +91,7 @@ pipeline {
                                     echo "✓ GitHub status notification sent successfully: ${ghState}"
                                 } catch (Exception e) {
                                     echo "✗ WARNING: Failed to set GitHub status: ${e.message}"
-                                    e.printStackTrace()
+                                    
                                 }
                             }
                             
@@ -121,7 +121,7 @@ pipeline {
                             echo "✓ GitHub failure status sent"
                         } catch (Exception e) {
                             echo "✗ WARNING: Failed to set GitHub failure status: ${e.message}"
-                            e.printStackTrace()
+                            
                         }
                     }
                 } else {
