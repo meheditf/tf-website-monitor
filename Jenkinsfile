@@ -78,14 +78,18 @@ pipeline {
                 }
             }
         }
-    }
+    }                
     
     post {
         success {
-            echo '✅ SonarQube scan passed and quality gate OK!'
+            script {
+                githubNotify context: 'Jenkins', status: 'SUCCESS', description: 'Build and SonarQube passed'
+            }
         }
         failure {
-            echo '❌ SonarQube scan failed or quality gate failed!'
+            script {
+                githubNotify context: 'Jenkins', status: 'FAILURE', description: 'SonarQube Quality Gate failed'
+            }
         }
     }
 }
