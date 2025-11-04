@@ -23,14 +23,29 @@ pipeline {
                     echo "GIT Branch: ${env.GIT_BRANCH ?: 'N/A'}"
                     echo "GIT Commit: ${env.GIT_COMMIT ?: 'N/A'}"
                     
-                    // Get the actual HEAD commit from the PR branch
+                    // Get the actual HEAD commit from GitHub API
                     if (env.CHANGE_ID) {
-                        def headCommit = sh(
-                            script: "git rev-parse origin/${env.CHANGE_BRANCH}",
-                            returnStdout: true
-                        ).trim()
-                        env.PR_HEAD_COMMIT = headCommit
-                        echo "PR Head Commit: ${env.PR_HEAD_COMMIT}"
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            def prInfo = sh(
+                                script: """
+                                    curl -s -H "Authorization: token \${GITHUB_TOKEN}" \
+                                    -H "Accept: application/vnd.github.v3+json" \
+                                    https://api.github.com/repos/${GITHUB_REPO}/pulls/${env.CHANGE_ID}
+                                """,
+                                returnStdout: true
+                            ).trim()
+                            
+                            // Parse JSON to get head SHA
+                            def headCommit = sh(
+                                script: """
+                                    echo '${prInfo}' | grep -o '"sha": *"[^"]*"' | head -1 | sed 's/"sha": *"\\([^"]*\\)"/\\1/'
+                                """,
+                                returnStdout: true
+                            ).trim()
+                            
+                            env.PR_HEAD_COMMIT = headCommit
+                            echo "PR Head Commit from GitHub API: ${env.PR_HEAD_COMMIT}"
+                        }
                     }
                     
                     echo "Is this a PR build? ${env.CHANGE_ID ? 'YES' : 'NO'}"
