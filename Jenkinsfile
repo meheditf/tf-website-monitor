@@ -30,14 +30,19 @@ pipeline {
                             -Dsonar.projectName=${SONAR_PROJECT_KEY} \
                             -Dsonar.sources=. \
                             -Dsonar.host.url=${SONAR_HOST_URL} \
-                            -Dsonar.login=${SONAR_AUTH_TOKEN} \
+                            -Dsonar.token=${SONAR_AUTH_TOKEN} \
                             -Dsonar.python.version=3.12
                         """
-                        
-                        // Wait for quality gate INSIDE withSonarQubeEnv
-                        timeout(time: 2, unit: 'MINUTES') {
-                            script {
+                    }
+                    
+                    // Wait for quality gate - OUTSIDE withSonarQubeEnv but INSIDE withCredentials
+                    timeout(time: 5, unit: 'MINUTES') {
+                        script {
+                            echo "Waiting for SonarQube Quality Gate result..."
+                            
+                            try {
                                 def qg = waitForQualityGate()
+                                echo "Quality Gate Status: ${qg.status}"
                                 
                                 if (qg.status != 'OK') {
                                     // Update GitHub with failure
@@ -63,6 +68,10 @@ pipeline {
                                         }
                                     }
                                 }
+                            } catch (Exception e) {
+                                echo "ERROR waiting for Quality Gate: ${e.message}"
+                                echo "This usually means the webhook from SonarQube didn't arrive"
+                                throw e
                             }
                         }
                     }
