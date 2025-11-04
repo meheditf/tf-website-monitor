@@ -7,14 +7,18 @@ pipeline {
     }
     
     stages {
-        stage('SonarQube Code Quality Scan') {
+        stage('SonarQube Analysis & Quality Gate') {
             steps {
-                // Set GitHub status to pending
                 script {
+                    // Set GitHub status to pending (if this is a PR)
                     if (env.CHANGE_ID) {
-                        githubNotify status: 'PENDING', 
-                                     context: 'SonarQube Quality Gate',
-                                     description: 'Running code quality scan...'
+                        try {
+                            githubNotify status: 'PENDING', 
+                                         context: 'SonarQube Quality Gate',
+                                         description: 'Running code quality scan...'
+                        } catch (Exception e) {
+                            echo "Warning: Could not update GitHub status: ${e.message}"
+                        }
                     }
                 }
                 
@@ -29,28 +33,36 @@ pipeline {
                             -Dsonar.login=${SONAR_AUTH_TOKEN} \
                             -Dsonar.python.version=3.12
                         """
-                    }
-                }
-            }
-        }
-        
-        stage('Quality Gate') {
-            steps {
-                timeout(time: 2, unit: 'MINUTES') {
-                    script {
-                        def qg = waitForQualityGate()
-                        if (qg.status != 'OK') {
-                            if (env.CHANGE_ID) {
-                                githubNotify status: 'FAILURE',
-                                             context: 'SonarQube Quality Gate',
-                                             description: "Quality gate failed: ${qg.status}"
-                            }
-                            error "Quality gate failed: ${qg.status}"
-                        } else {
-                            if (env.CHANGE_ID) {
-                                githubNotify status: 'SUCCESS',
-                                             context: 'SonarQube Quality Gate',
-                                             description: 'Quality gate passed!'
+                        
+                        // Wait for quality gate INSIDE withSonarQubeEnv
+                        timeout(time: 2, unit: 'MINUTES') {
+                            script {
+                                def qg = waitForQualityGate()
+                                
+                                if (qg.status != 'OK') {
+                                    // Update GitHub with failure
+                                    if (env.CHANGE_ID) {
+                                        try {
+                                            githubNotify status: 'FAILURE',
+                                                         context: 'SonarQube Quality Gate',
+                                                         description: "Quality gate failed: ${qg.status}"
+                                        } catch (Exception e) {
+                                            echo "Warning: Could not update GitHub status: ${e.message}"
+                                        }
+                                    }
+                                    error "Pipeline aborted due to quality gate failure: ${qg.status}"
+                                } else {
+                                    // Update GitHub with success
+                                    if (env.CHANGE_ID) {
+                                        try {
+                                            githubNotify status: 'SUCCESS',
+                                                         context: 'SonarQube Quality Gate',
+                                                         description: 'Quality gate passed!'
+                                        } catch (Exception e) {
+                                            echo "Warning: Could not update GitHub status: ${e.message}"
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
