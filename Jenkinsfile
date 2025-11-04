@@ -7,22 +7,18 @@ pipeline {
     }
     
     stages {
-        // Stage runs only for pull requests targeting dev
-        stage('SonarQube Analysis & Quality Gate (PR Only)') {
-            when { 
-                changeRequest(target: 'dev') 
-            }
+        stage('SonarQube Analysis & Quality Gate') {
             steps {
-                withCredentials([
-                    string(credentialsId: 'SonarQube', variable: 'SONAR_AUTH_TOKEN'),
-                    string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')
-                ]) {
+                withCredentials([string(credentialsId: 'SonarQube', variable: 'SONAR_AUTH_TOKEN'),
+                                 string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                     script {
                         // Mark PR status as pending
-                        githubNotify context: 'SonarQube Quality Gate', 
-                                     status: 'PENDING', 
-                                     description: 'Running code quality scan...', 
-                                     credentialsId: 'github-token'
+                        if (env.CHANGE_ID) {
+                            githubNotify context: 'SonarQube Quality Gate', 
+                                         status: 'PENDING', 
+                                         description: 'Running code quality scan...', 
+                                         credentialsId: 'github-token'
+                        }
                         
                         // Run SonarQube scanner
                         withSonarQubeEnv('SONARQUBE') {
@@ -42,11 +38,13 @@ pipeline {
                             def qg = waitForQualityGate()
                             echo "Quality Gate Status: ${qg.status}"
                             
-                            def ghStatus = (qg.status == 'OK') ? 'SUCCESS' : 'FAILURE'
-                            githubNotify context: 'SonarQube Quality Gate', 
-                                         status: ghStatus, 
-                                         description: "Quality gate ${qg.status}", 
-                                         credentialsId: 'github-token'
+                            if (env.CHANGE_ID) {
+                                def ghStatus = (qg.status == 'OK') ? 'SUCCESS' : 'FAILURE'
+                                githubNotify context: 'SonarQube Quality Gate', 
+                                             status: ghStatus, 
+                                             description: "Quality gate ${qg.status}", 
+                                             credentialsId: 'github-token'
+                            }
                             
                             if (qg.status != 'OK') {
                                 error "Pipeline aborted due to Quality Gate failure: ${qg.status}"
@@ -54,14 +52,6 @@ pipeline {
                         }
                     }
                 }
-            }
-        }
-
-        // Stage that runs on non-PR builds (regular pushes)
-        stage('Non-PR Build') {
-            when { not { changeRequest() } }
-            steps {
-                echo "This stage runs for regular pushes / branches"
             }
         }
     }
